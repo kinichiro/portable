@@ -2,33 +2,16 @@ environment:
   PATH: C:\msys64\usr\bin;C:\msys64\mingw64\bin;C:\Windows\System32;C:\Windows;%PATH%
   
   matrix:
-    # x86 builds
-    - GENERATOR: Visual Studio 14 2015
-      CONFIG: Release
-      SHARED_LIBS: ON
     - GENERATOR: Visual Studio 14 2015
       CONFIG: Release
       SHARED_LIBS: OFF
-    - GENERATOR: Visual Studio 14 2015
-      CONFIG: Debug
-      SHARED_LIBS: ON
-    - GENERATOR: Visual Studio 14 2015
-      CONFIG: Debug
-      SHARED_LIBS: OFF
+      ARCH: x86
 
     # x64 builds
     - GENERATOR: Visual Studio 14 2015 Win64
       CONFIG: Release
-      SHARED_LIBS: ON
-    - GENERATOR: Visual Studio 14 2015 Win64
-      CONFIG: Release
       SHARED_LIBS: OFF
-    - GENERATOR: Visual Studio 14 2015 Win64
-      CONFIG: Debug
-      SHARED_LIBS: ON
-    - GENERATOR: Visual Studio 14 2015 Win64
-      CONFIG: Debug
-      SHARED_LIBS: OFF
+      ARCH: x64
 
 init:
   # update mysy2
@@ -39,9 +22,11 @@ init:
   
 before_build:
   - bash autogen.sh
+  - set /p VER=<VERSION
+  - set DIST_NAME=LibreSSL_%VER%_%ARCH%
   - mkdir build
   - cd build
-  - cmake .. -G "%GENERATOR%" -DBUILD_SHARED_LIBS=%SHARED_LIBS%
+  - cmake .. -G "%GENERATOR%" -DBUILD_SHARED_LIBS=%SHARED_LIBS% -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%\%DIST_NAME%
 
 build_script:
   - cmake --build . --config %CONFIG%
@@ -49,3 +34,15 @@ build_script:
 test_script:
   # TODO: Determine how to run ssltest on AppVeyor
   - ctest -C %CONFIG% --timeout 150 --output-on-failure -E ssltest
+
+after_test:
+  - cmake --build . --target INSTALL
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - copy COPYING %DIST_NAME%
+  - copy ChangeLog %DIST_NAME%
+  - 7z a %DIST_NAME%.zip %DIST_NAME%
+
+artifacts:
+  - path: '%DIST_NAME%.zip'
+    name: '%DIST_NAME%'
+
