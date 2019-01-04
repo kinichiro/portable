@@ -1,32 +1,51 @@
 language: c
 matrix:
   include:
+#    - compiler: clang
+#      os: osx
+#      env: ARCH=native
+#    - compiler: gcc
+#      os: osx
+#      env: ARCH=native
     - compiler: clang
-      os: osx
-      env: ARCH=native
-    - compiler: gcc
-      os: osx
-      env: ARCH=native
-    - compiler: clang
       os: linux
       env: ARCH=native
       dist: trusty
       sudo: required
-    - compiler: gcc
-      os: linux
-      env: ARCH=native
+#    - compiler: gcc
+#      os: linux
+#      env: ARCH=native
+#      dist: trusty
+#      sudo: required
+#    - compiler: gcc
+#      os: linux
+#      env: ARCH=mingw32
+#      dist: trusty
+#      sudo: required
+#    - compiler: gcc
+#      os: linux
+#      env: ARCH=mingw64
+#      dist: trusty
+#      sudo: required
+    - language: android
+      env: ARCH=android
       dist: trusty
       sudo: required
-    - compiler: gcc
-      os: linux
-      env: ARCH=mingw32
-      dist: trusty
-      sudo: required
-    - compiler: gcc
-      os: linux
-      env: ARCH=mingw64
-      dist: trusty
-      sudo: required
+      android:
+        components:
+          - tools
+          - tools
+          - platform-tools
+          - build-tools-27.0.3
+          - android-27
+          - extra-google-google_play_services
+          - extra-google-m2repository
+          - extra-android-m2repository
+          - sys-img-armeabi-v7a-android-27
+          - sys-img-armeabi-v7a-android-21
+      licenses:
+        - 'android-sdk-preview-license-.+'
+        - 'android-sdk-license-.+'
 
 script:
   "./scripts/travis"
