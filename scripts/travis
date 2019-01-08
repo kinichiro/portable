@@ -97,6 +97,7 @@ elif [ "x$ARCH" = "xarm32" -o "x$ARCH" = "xarm64" ]; then
 	file apps/openssl/.libs/openssl
 
 elif [ "x$ARCH" = "xandroid" ]; then
+	sudo apt-get update
 	echo y | sdkmanager 'ndk-bundle'
 	echo y | sdkmanager 'cmake;3.6.4111459'
 	echo y | sdkmanager 'lldb;3.0'
@@ -154,6 +155,12 @@ elif [ "x$ARCH" = "xandroid" ]; then
 
 		 echo ""
 		 file apps/openssl/openssl
+		 echo ""
+		 ldd apps/openssl/openssl
+
+		 if [ $ABI = x86_64 ] ; then
+		 	$NINJA test
+		 fi
 		)
 	done
 fi
