@@ -1,0 +1,10 @@
+--- apps/nc/socks.c.orig	2019-01-08 23:07:52.580335280 +0900
++++ apps/nc/socks.c	2019-01-08 23:08:05.108475335 +0900
+@@ -36,6 +36,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <strings.h>
+ #include <unistd.h>
+ #include <resolv.h>
+ #include <readpassphrase.h>
