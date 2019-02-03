@@ -124,6 +124,7 @@ AM_CONDITIONAL([ENABLE_NC], [test "x$enable_nc" = xyes])
 AM_CONDITIONAL([BUILD_NC],  [test x$BUILD_NC = xyes -o "x$enable_nc" = xyes])
 
 AM_CONDITIONAL([HOST_AIX],     [test x$HOST_OS = xaix])
+AM_CONDITIONAL([HOST_ANDROID], [test x$HOST_OS = xandroid])
 AM_CONDITIONAL([HOST_CYGWIN],  [test x$HOST_OS = xcygwin])
 AM_CONDITIONAL([HOST_DARWIN],  [test x$HOST_OS = xdarwin])
 AM_CONDITIONAL([HOST_FREEBSD], [test x$HOST_OS = xfreebsd])

@@ -164,6 +164,9 @@ libcompat_la_SOURCES += compat/getpagesize.c
 endif
 
 if !HAVE_GETPROGNAME
+if HOST_ANDROID
+libcompat_la_SOURCES += compat/getprogname_android.c
+endif
 if HOST_LINUX
 libcompat_la_SOURCES += compat/getprogname_linux.c
 endif
