@@ -10,18 +10,18 @@ environment:
       GENERATOR: Visual Studio 14 2015 Win64
       CONFIG: Release
       SHARED_LIBS: ON
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      GENERATOR: Visual Studio 14 2015
-      CONFIG: Release
-      SHARED_LIBS: ON
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      GENERATOR: Visual Studio 14 2015 Win64
-      CONFIG: Release
-      SHARED_LIBS: OFF
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      GENERATOR: Visual Studio 14 2015
-      CONFIG: Release
-      SHARED_LIBS: OFF
+#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#      GENERATOR: Visual Studio 14 2015
+#      CONFIG: Release
+#      SHARED_LIBS: ON
+#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#      GENERATOR: Visual Studio 14 2015 Win64
+#      CONFIG: Release
+#      SHARED_LIBS: OFF
+#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#      GENERATOR: Visual Studio 14 2015
+#      CONFIG: Release
+#      SHARED_LIBS: OFF
 
 init:
   # update mysy2
