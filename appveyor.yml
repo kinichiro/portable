@@ -28,6 +28,7 @@ init:
   - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf perl"
+  - C:\msys64\usr\bin\bash -lc "export PERL_MM_USE_DEFAULT=1; cpan POSIX"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S git"
 
 before_build:
