@@ -1,0 +1,188 @@
+--- apps/openssl/speed.c.orig	Tue Jul  2 21:58:28 2019
++++ apps/openssl/speed.c	Tue Jul  2 23:10:48 2019
+@@ -87,6 +87,10 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
++#ifdef _WIN32
++#include <windows.h>
++#endif
++
+ #include "apps.h"
+ 
+ #include <openssl/bn.h>
+@@ -159,7 +163,9 @@ static void
+ pkey_print_message(const char *str, const char *str2,
+     long num, int bits, int sec);
+ static void print_result(int alg, int run_no, int count, double time_used);
++#ifndef OPENSSL_NO_SPEED_MULTI
+ static int do_multi(int multi);
++#endif
+ 
+ #define ALGOR_NUM	32
+ #define SIZE_NUM	5
+@@ -186,6 +192,7 @@ static double dsa_results[DSA_NUM][2];
+ static double ecdsa_results[EC_NUM][2];
+ static double ecdh_results[EC_NUM][1];
+ 
++#ifndef _WIN32
+ static void sig_done(int sig);
+ 
+ static void
+@@ -194,11 +201,13 @@ sig_done(int sig)
+ 	signal(SIGALRM, sig_done);
+ 	run = 0;
+ }
++#endif
+ 
+ #define START	TM_RESET
+ #define STOP	TM_GET
+ 
+ 
++#ifndef _WIN32
+ static double
+ Time_F(int s)
+ {
+@@ -208,7 +217,60 @@ Time_F(int s)
+ 		return app_timer_real(s);
+ }
+ 
++#else
++static unsigned int lapse;
++static volatile unsigned int schlock;
+ 
++static void alarm(unsigned int secs)
++{
++	lapse = secs * 1000;
++}
++
++static DWORD WINAPI sleepy(VOID * arg)
++{
++	schlock = 1;
++	Sleep(lapse);
++	run = 0;
++	return (0);
++}
++
++static double Time_F(int s)
++{
++	double ret;
++	static HANDLE thr;
++
++	if (s == START) {
++		schlock = 0;
++		thr = CreateThread(NULL, 4096, sleepy, NULL, 0, NULL);
++		if (thr == NULL) {
++			DWORD err = GetLastError();
++			BIO_printf(bio_err, "unable to CreateThread (%lu)",
++			    err);
++			ExitProcess(err);
++		}
++		while (!schlock)
++			Sleep(0); /* scheduler spinlock */
++
++		if (usertime)
++			ret = app_timer_user(s);
++		else
++			ret = app_timer_real(s);
++
++	} else {
++		if (usertime)
++			ret = app_timer_user(s);
++		else
++			ret = app_timer_real(s);
++
++		if (run)
++			TerminateThread(thr, 0);
++		CloseHandle(thr);
++	}
++
++	return ret;
++}
++#endif
++
+ static const int KDF1_SHA1_len = 20;
+ static void *
+ KDF1_SHA1(const void *in, size_t inlen, void *out, size_t * outlen)
+@@ -466,8 +528,10 @@ speed_main(int argc, char **argv)
+ 	const EVP_CIPHER *evp_cipher = NULL;
+ 	const EVP_MD *evp_md = NULL;
+ 	int decrypt = 0;
++#ifndef OPENSSL_NO_SPEED_MULTI
+ 	int multi = 0;
+ 	const char *errstr = NULL;
++#endif
+ 
+ 	if (single_execution) {
+ 		if (pledge("stdio proc", NULL) == -1) {
+@@ -544,6 +608,7 @@ speed_main(int argc, char **argv)
+ 			j--;	/* Otherwise, -decrypt gets confused with an
+ 				 * algorithm. */
+ 		}
++#ifndef OPENSSL_NO_SPEED_MULTI
+ 		else if ((argc > 0) && (strcmp(*argv, "-multi") == 0)) {
+ 			argc--;
+ 			argv++;
+@@ -559,6 +624,7 @@ speed_main(int argc, char **argv)
+ 			j--;	/* Otherwise, -multi gets confused with an
+ 				 * algorithm. */
+ 		}
++#endif
+ 		else if (argc > 0 && !strcmp(*argv, "-mr")) {
+ 			mr = 1;
+ 			j--;	/* Otherwise, -mr gets confused with an
+@@ -921,7 +987,9 @@ speed_main(int argc, char **argv)
+ 			BIO_printf(bio_err, "-evp e          use EVP e.\n");
+ 			BIO_printf(bio_err, "-decrypt        time decryption instead of encryption (only EVP).\n");
+ 			BIO_printf(bio_err, "-mr             produce machine readable output.\n");
++#ifndef OPENSSL_NO_SPEED_MULTI
+ 			BIO_printf(bio_err, "-multi n        run n benchmarks in parallel.\n");
++#endif
+ 			goto end;
+ 		}
+ 		argc--;
+@@ -929,8 +997,10 @@ speed_main(int argc, char **argv)
+ 		j++;
+ 	}
+ 
++#ifndef OPENSSL_NO_SPEED_MULTI
+ 	if (multi && do_multi(multi))
+ 		goto show_res;
++#endif
+ 
+ 	if (j == 0) {
+ 		for (i = 0; i < ALGOR_NUM; i++) {
+@@ -1001,7 +1071,9 @@ speed_main(int argc, char **argv)
+ 	memset(rsa_c, 0, sizeof(rsa_c));
+ #define COND(c)	(run && count<0x7fffffff)
+ #define COUNT(d) (count)
++#ifndef _WIN32
+ 	signal(SIGALRM, sig_done);
++#endif
+ 
+ #ifndef OPENSSL_NO_MD4
+ 	if (doit[D_MD4]) {
+@@ -1771,7 +1843,9 @@ speed_main(int argc, char **argv)
+ 				ecdh_doit[j] = 0;
+ 		}
+ 	}
++#ifndef OPENSSL_NO_SPEED_MULTI
+ show_res:
++#endif
+ 	if (!mr) {
+ 		fprintf(stdout, "%s\n", SSLeay_version(SSLEAY_VERSION));
+ 		fprintf(stdout, "%s\n", SSLeay_version(SSLEAY_BUILT_ON));
+@@ -1949,6 +2023,7 @@ print_result(int alg, int run_no, int count, double ti
+ 	results[alg][run_no] = ((double) count) / time_used * lengths[run_no];
+ }
+ 
++#ifndef OPENSSL_NO_SPEED_MULTI
+ static char *
+ sstrsep(char **string, const char *delim)
+ {
+@@ -2155,4 +2230,5 @@ do_multi(int multi)
+ 	free(fds);
+ 	return 1;
+ }
++#endif
+ #endif
