@@ -1,0 +1,174 @@
+--- ssl/ssl_tlsext.c.orig	Sat Nov 16 20:11:36 2019
++++ ssl/ssl_tlsext.c	Sat Nov 16 23:00:59 2019
+@@ -1223,12 +1223,18 @@
+ 	    TLS1_3_VERSION);
+ }
+ 
+-static int
+-tlsext_keyshare_x25519_internal(SSL *s, CBB *cbb)
++int
++tlsext_keyshare_client_build(SSL *s, CBB *cbb)
+ {
+ 	uint8_t *public_key = NULL, *private_key = NULL;
+-	CBB key_exchange;
++	CBB client_shares, key_exchange;
+ 
++	/* Generate and provide key shares. */
++	if (!CBB_add_u16_length_prefixed(cbb, &client_shares))
++		return 0;
++
++	/* XXX - other groups. */
++
+ 	/* Generate X25519 key pair. */
+ 	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
+ 		goto err;
+@@ -1237,13 +1243,16 @@
+ 	X25519_keypair(public_key, private_key);
+ 
+ 	/* Add the group and serialize the public key. */
+-	if (!CBB_add_u16(cbb, tls1_ec_nid2curve_id(NID_X25519)))
++	if (!CBB_add_u16(&client_shares, tls1_ec_nid2curve_id(NID_X25519)))
+ 		goto err;
+-	if (!CBB_add_u16_length_prefixed(cbb, &key_exchange))
++	if (!CBB_add_u16_length_prefixed(&client_shares, &key_exchange))
+ 		goto err;
+ 	if (!CBB_add_bytes(&key_exchange, public_key, X25519_KEY_LENGTH))
+ 		goto err;
+ 
++	if (!CBB_flush(cbb))
++		goto err;
++
+ 	S3I(s)->hs_tls13.x25519_public = public_key;
+ 	S3I(s)->hs_tls13.x25519_private = private_key;
+ 
+@@ -1257,32 +1266,6 @@
+ }
+ 
+ int
+-tlsext_keyshare_client_build(SSL *s, CBB *cbb)
+-{
+-	CBB client_shares;
+-
+-	/* Generate and provide key shares. */
+-	if (!CBB_add_u16_length_prefixed(cbb, &client_shares))
+-		return 0;
+-
+-	/* XXX - other groups. */
+-
+-	if (!tlsext_keyshare_x25519_internal(s, &client_shares))
+-		return 0;
+-
+-	if (!CBB_flush(cbb))
+-		goto err;
+-
+-	return 1;
+-
+- err:
+-	freezero(S3I(s)->hs_tls13.x25519_public, X25519_KEY_LENGTH);
+-	freezero(S3I(s)->hs_tls13.x25519_private, X25519_KEY_LENGTH);
+-
+-	return 0;
+-}
+-
+-int
+ tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert)
+ {
+ 	CBS client_shares;
+@@ -1341,21 +1324,41 @@
+ int
+ tlsext_keyshare_server_build(SSL *s, CBB *cbb)
+ {
++	uint8_t *public_key = NULL, *private_key = NULL;
++	CBB key_exchange;
++
++	/* XXX deduplicate with client code */
++
+ 	/* X25519 */
+ 	if (S3I(s)->hs_tls13.x25519_peer_public == NULL)
+ 		return 0;
+ 
+-	if (!tlsext_keyshare_x25519_internal(s, cbb))
+-		return 0;
++	/* Generate X25519 key pair. */
++	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
++		goto err;
++	if ((private_key = malloc(X25519_KEY_LENGTH)) == NULL)
++		goto err;
++	X25519_keypair(public_key, private_key);
+ 
++	/* Add the group and serialize the public key. */
++	if (!CBB_add_u16(cbb, tls1_ec_nid2curve_id(NID_X25519)))
++		goto err;
++	if (!CBB_add_u16_length_prefixed(cbb, &key_exchange))
++		goto err;
++	if (!CBB_add_bytes(&key_exchange, public_key, X25519_KEY_LENGTH))
++		goto err;
++
+ 	if (!CBB_flush(cbb))
+ 		goto err;
+ 
++	S3I(s)->hs_tls13.x25519_public = public_key;
++	S3I(s)->hs_tls13.x25519_private = private_key;
++
+ 	return 1;
+ 
+  err:
+-	freezero(S3I(s)->hs_tls13.x25519_public, X25519_KEY_LENGTH);
+-	freezero(S3I(s)->hs_tls13.x25519_private, X25519_KEY_LENGTH);
++	freezero(public_key, X25519_KEY_LENGTH);
++	freezero(private_key, X25519_KEY_LENGTH);
+ 
+ 	return 0;
+ }
+@@ -1531,8 +1534,8 @@
+ 	    S3I(s)->hs_tls13.cookie != NULL);
+ }
+ 
+-static int
+-tlsext_cookie_build_internal(SSL *s, CBB *cbb)
++int
++tlsext_cookie_client_build(SSL *s, CBB *cbb)
+ {
+ 	CBB cookie;
+ 
+@@ -1550,12 +1553,6 @@
+ }
+ 
+ int
+-tlsext_cookie_client_build(SSL *s, CBB *cbb)
+-{
+-	return tlsext_cookie_build_internal(s, cbb);
+-}
+-
+-int
+ tlsext_cookie_server_parse(SSL *s, CBS *cbs, int *alert)
+ {
+ 	CBS cookie;
+@@ -1602,10 +1599,24 @@
+ }
+ 
+ int
+-tlsext_cookie_server_build(SSL *s, CBB *cbb) {
+-	return tlsext_cookie_build_internal(s, cbb);
+-}
++tlsext_cookie_server_build(SSL *s, CBB *cbb)
++{
++	CBB cookie;
+ 
++	/* XXX deduplicate with client code */
++
++	if (!CBB_add_u16_length_prefixed(cbb, &cookie))
++		return 0;
++
++	if (!CBB_add_bytes(&cookie, S3I(s)->hs_tls13.cookie,
++	    S3I(s)->hs_tls13.cookie_len))
++		return 0;
++
++	if (!CBB_flush(cbb))
++		return 0;
++
++	return 1;
++}
+ 
+ int
+ tlsext_cookie_client_parse(SSL *s, CBS *cbs, int *alert)
