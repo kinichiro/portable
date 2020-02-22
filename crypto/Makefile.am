@@ -188,7 +188,7 @@ if !HAVE_RECALLOCARRAY
 libcompat_la_SOURCES += compat/recallocarray.c
 endif
 
-if !HAVE_SYSLOG_R
+if !HAVE_VSYSLOG_R
 libcompat_la_SOURCES += compat/syslog_r.c
 endif
 

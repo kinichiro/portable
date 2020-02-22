@@ -10,7 +10,7 @@
 #ifndef LIBCRYPTOCOMPAT_SYSLOG_H
 #define LIBCRYPTOCOMPAT_SYSLOG_H
 
-#ifndef HAVE_SYSLOG_R
+#ifndef HAVE_VSYSLOG_R
 
 #include <stdarg.h>
 
@@ -20,6 +20,7 @@
 #define	LOG_LOCAL2	(18<<3)	/* reserved for local use */
 #endif
 
+#ifndef SYSLOG_DATA_INIT
 struct syslog_data {
 	int log_stat;
 	const char *log_tag;
@@ -28,8 +29,8 @@ struct syslog_data {
 };
 
 #define SYSLOG_DATA_INIT {0, (const char *)0, LOG_USER, 0xff}
+#endif
 
-void syslog_r(int, struct syslog_data *, const char *, ...);
 void vsyslog_r(int, struct syslog_data *, const char *, va_list);
 
 #endif

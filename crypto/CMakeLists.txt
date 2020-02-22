@@ -875,7 +875,7 @@ if(NOT HAVE_STRSEP)
 	set(EXTRA_EXPORT ${EXTRA_EXPORT} strsep)
 endif()
 
-if(NOT HAVE_SYSLOG_R)
+if(NOT HAVE_VSYSLOG_R)
 	set(CRYPTO_SRC ${CRYPTO_SRC} compat/syslog_r.c)
 endif()
 
