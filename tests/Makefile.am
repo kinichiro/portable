@@ -351,12 +351,7 @@ record_layer_test_SOURCES = record_layer_test.c
 # rfc5280time
 check_PROGRAMS += rfc5280time
 rfc5280time_SOURCES = rfc5280time.c
-if SMALL_TIME_T
-TESTS += rfc5280time_small.test
-else
 TESTS += rfc5280time
-endif
-EXTRA_DIST += rfc5280time_small.test
 
 # rmdtest
 TESTS += rmdtest

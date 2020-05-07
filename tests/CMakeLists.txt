@@ -369,11 +369,7 @@ endif()
 # rfc5280time
 add_executable(rfc5280time rfc5280time.c)
 target_link_libraries(rfc5280time ${OPENSSL_LIBS})
-if(SMALL_TIME_T)
-	add_test(rfc5280time ${CMAKE_CURRENT_SOURCE_DIR}/rfc5280time_small.test)
-else()
-	add_test(rfc5280time rfc5280time)
-endif()
+add_test(rfc5280time rfc5280time)
 
 # rmdtest
 add_executable(rmdtest rmdtest.c)
