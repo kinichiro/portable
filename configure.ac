@@ -77,7 +77,8 @@ AM_CONDITIONAL([ENABLE_TESTS], [test "x$enable_tests" = xyes])
 
 # Add CPU-specific alignment flags
 old_cflags=$CFLAGS
-CFLAGS="$CFLAGS -I$srcdir/include"
+CFLAGS="$CFLAGS -I$srcdir/include -I$srcdir/include/compat -DLIBRESSL_INTERNAL"
+CFLAGS="$CFLAGS -D__BEGIN_HIDDEN_DECLS= -D__END_HIDDEN_DECLS="
 AC_MSG_CHECKING([if BSWAP4 builds without __STRICT_ALIGNMENT])
 AC_TRY_COMPILE([#include "$srcdir/crypto/modes/modes_lcl.h"],
 	       [int a = 0; BSWAP4(a);],
@@ -94,7 +95,7 @@ AS_CASE([$host_cpu],
 	[i?86], [HOSTARCH=intel],
 	[x86_64], [HOSTARCH=intel]
 )
-AS_IF([test "x$BSWAP4" = "xyes" -a "$host_cpu" = "arm" ],,CPPFLAGS="$CPPFLAGS -D__STRICT_ALIGNMENT")
+AS_IF([test "x$BSWAP4" = "xno"],,CPPFLAGS="$CPPFLAGS -D__STRICT_ALIGNMENT")
 AM_CONDITIONAL([HOST_CPU_IS_INTEL], [test "x$HOSTARCH" = "xintel"])
 
 AC_MSG_CHECKING([if .gnu.warning accepts long strings])
