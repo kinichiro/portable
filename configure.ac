@@ -77,7 +77,7 @@ AM_CONDITIONAL([ENABLE_TESTS], [test "x$enable_tests" = xyes])
 
 # Add CPU-specific alignment flags
 old_cflags=$CFLAGS
-CFLAGS="$CFLAGS -I$srcdir/include"
+CFLAGS="$CFLAGS -I$srcdir/include -I$srcdir/include/compat"
 AC_MSG_CHECKING([if BSWAP4 builds without __STRICT_ALIGNMENT])
 AC_TRY_COMPILE([#include "$srcdir/crypto/modes/modes_lcl.h"],
 	       [int a = 0; BSWAP4(a);],
