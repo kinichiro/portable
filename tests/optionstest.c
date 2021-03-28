@@ -22,6 +22,7 @@
 #include <openssl/bio.h>
 #include <openssl/conf.h>
 
+#define SSL_is_dtls _SSL_is_dtls
 #include <apps.h>
 #include <apps.c>
 #include <strtonum.c>
