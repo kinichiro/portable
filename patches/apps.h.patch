@@ -1,0 +1,9 @@
+--- apps/openssl/apps.h.orig	Sun Mar 28 09:12:36 2021
++++ apps/openssl/apps.h	Sun Mar 28 10:59:27 2021
+@@ -329,4 +329,6 @@ int options_parse(int argc, char **argv, const struct 
+ 
+ void show_cipher(const OBJ_NAME *name, void *arg);
+ 
++#define SSL_is_dtls _SSL_is_dtls
++
+ #endif
