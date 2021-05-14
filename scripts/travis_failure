@@ -1,0 +1,17 @@
+#!/bin/sh
+
+echo "###"
+pwd
+echo "###"
+ls
+echo "###"
+ls tests
+echo "###"
+ls ./tests/*log
+echo "###"
+cat tests/ssl_get_shared_ciphers.log
+echo "###"
+./tests/ssl_get_shared_ciphers
+echo "###"
+
+
